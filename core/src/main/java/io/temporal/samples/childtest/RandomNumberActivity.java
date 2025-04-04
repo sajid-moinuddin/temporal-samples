@@ -19,20 +19,30 @@
 
 package io.temporal.samples.childtest;
 
-import io.temporal.workflow.WorkflowInterface;
-import io.temporal.workflow.WorkflowMethod;
+import io.temporal.activity.ActivityInterface;
 
-/**
- * A simple child workflow interface that processes a string and returns the sum of random numbers
- */
-@WorkflowInterface
-public interface ChildWorkflow {
+/** Activity interface that provides random number generation functionality */
+@ActivityInterface
+public interface RandomNumberActivity {
+
   /**
-   * Child workflow method that takes a string input and returns the sum of random numbers
+   * Generates the first random integer
    *
-   * @param input String input for the workflow
-   * @return Sum of three random integers
+   * @return random integer
    */
-  @WorkflowMethod
-  int processData(String input);
+  int getFirstNumber();
+
+  /**
+   * Generates the second random integer
+   *
+   * @return random integer
+   */
+  int getSecondNumber();
+
+  /**
+   * Generates the third random integer
+   *
+   * @return random integer
+   */
+  int getThirdNumber();
 }
