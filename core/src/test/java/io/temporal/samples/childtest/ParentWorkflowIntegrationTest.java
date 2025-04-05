@@ -26,14 +26,14 @@ import org.slf4j.LoggerFactory;
  * local Temporal server is already running.
  */
 public class ParentWorkflowIntegrationTest {
-
-  private static final String TASK_QUEUE = "ParentWorkflowIntegrationTestQueue";
+  private static final String WORKFLOW_TASK_QUEUE = "ParentWorkflowIntegrationTestQueue";
   private static final Logger logger = LoggerFactory.getLogger(ParentWorkflowIntegrationTest.class);
 
   private WorkflowServiceStubs workflowServiceStubs;
   private WorkflowClient workflowClient;
   private WorkerFactory factory;
-  private Worker worker;
+  private Worker workflowWorker;
+  private Worker activityWorker;
 
   /**
    * Clean up existing workflows on the Temporal server that match our test workflow ID pattern to
@@ -106,15 +106,21 @@ public class ParentWorkflowIntegrationTest {
     // Clean up existing workflows before running test
     cleanupExistingWorkflows();
 
-    // Create Worker Factory and Worker
+    // Create Worker Factory
     factory = WorkerFactory.newInstance(workflowClient);
-    worker = factory.newWorker(TASK_QUEUE);
 
-    // Register workflow implementations
-    worker.registerWorkflowImplementationTypes(ParentWorkflowImpl.class, ChildWorkflowImpl.class);
+    // Create workflow worker on the workflow task queue
+    workflowWorker = factory.newWorker(WORKFLOW_TASK_QUEUE);
 
-    // Register activity implementation
-    worker.registerActivitiesImplementations(new RandomNumberActivityImpl());
+    // Register workflow implementations with the workflow worker
+    workflowWorker.registerWorkflowImplementationTypes(
+        ParentWorkflowImpl.class, ChildWorkflowImpl.class);
+
+    // Create dedicated worker for the RandomNumberActivity task queue
+    activityWorker = factory.newWorker(RandomNumberActivity.TASK_QUEUE);
+
+    // Register activity implementation with the activity worker
+    activityWorker.registerActivitiesImplementations(new RandomNumberActivityImpl());
 
     // Start the worker factory
     factory.start();
@@ -138,7 +144,7 @@ public class ParentWorkflowIntegrationTest {
         workflowClient.newWorkflowStub(
             ParentWorkflow.class,
             WorkflowOptions.newBuilder()
-                .setTaskQueue(TASK_QUEUE)
+                .setTaskQueue(WORKFLOW_TASK_QUEUE)
                 .setWorkflowId(workflowId)
                 .build());
 

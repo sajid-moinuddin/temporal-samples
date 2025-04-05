@@ -32,11 +32,12 @@ import org.slf4j.Logger;
 public class ChildWorkflowImpl implements ChildWorkflow {
   private static final Logger logger = Workflow.getLogger(ChildWorkflowImpl.class);
 
-  // Define activity options
+  // Define activity options with the dedicated task queue
   private final ActivityOptions activityOptions =
       ActivityOptions.newBuilder()
           .setStartToCloseTimeout(Duration.ofSeconds(5))
           .setRetryOptions(RetryOptions.newBuilder().setMaximumAttempts(3).build())
+          .setTaskQueue(RandomNumberActivity.TASK_QUEUE) // Use the dedicated task queue
           .build();
 
   // Create activity client

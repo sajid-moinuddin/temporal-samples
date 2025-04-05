@@ -25,6 +25,9 @@ import io.temporal.activity.ActivityInterface;
 @ActivityInterface
 public interface RandomNumberActivity {
 
+  /** Task queue name specifically for RandomNumberActivity */
+  String TASK_QUEUE = "RandomNumberActivityQueue";
+
   /**
    * Generates the first random integer
    *
