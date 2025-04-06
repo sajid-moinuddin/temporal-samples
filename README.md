@@ -193,6 +193,7 @@ To run any of the SpringBoot samples in your Temporal Cloud namespace:
 #### NOTES:
 https://blog.corneliadavis.com/temporal-what-does-preserving-state-really-mean-ebdca256526f
 https://gillesbarbier.medium.com/under-the-hood-of-a-workflow-as-code-event-driven-engine-6107dab9b87c
+http://www.workflowpatterns.com/documentation/documents/wfs-pat-2002.pdf
 
 
 
