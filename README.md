@@ -189,6 +189,15 @@ More info on each sample:
 #### Temporal Cloud
 To run any of the SpringBoot samples in your Temporal Cloud namespace:
 
+
+#### NOTES:
+https://blog.corneliadavis.com/temporal-what-does-preserving-state-really-mean-ebdca256526f
+https://gillesbarbier.medium.com/under-the-hood-of-a-workflow-as-code-event-driven-engine-6107dab9b87c
+
+
+
+
+
 1. Edit the [application-tc.yaml](/springboot/src/main/resources/application-tc.yaml) to set your namespace and client certificates.
 
 2. Start SpringBoot from main repo dir with the `tc` profile:
