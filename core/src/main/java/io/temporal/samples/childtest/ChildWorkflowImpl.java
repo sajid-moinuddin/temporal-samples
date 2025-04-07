@@ -32,30 +32,35 @@ import org.slf4j.Logger;
 public class ChildWorkflowImpl implements ChildWorkflow {
   private static final Logger logger = Workflow.getLogger(ChildWorkflowImpl.class);
 
-  // Define activity options with the dedicated task queue
+  // Define common activity options
   private final ActivityOptions activityOptions =
       ActivityOptions.newBuilder()
           .setStartToCloseTimeout(Duration.ofSeconds(5))
           .setRetryOptions(RetryOptions.newBuilder().setMaximumAttempts(3).build())
-          .setTaskQueue(RandomNumberActivity.TASK_QUEUE) // Use the dedicated task queue
           .build();
 
-  // Create activity client
-  private final RandomNumberActivity randomActivity =
-      Workflow.newActivityStub(RandomNumberActivity.class, activityOptions);
+  // Create activity clients for each number activity
+  private final FirstNumberActivity firstNumberActivity =
+      Workflow.newActivityStub(FirstNumberActivity.class, activityOptions);
+
+  private final SecondNumberActivity secondNumberActivity =
+      Workflow.newActivityStub(SecondNumberActivity.class, activityOptions);
+
+  private final ThirdNumberActivity thirdNumberActivity =
+      Workflow.newActivityStub(ThirdNumberActivity.class, activityOptions);
 
   @Override
   public int processData(String input) {
     logger.info("Child workflow processing: " + input);
 
     // Execute the three activities to get random numbers
-    int num1 = randomActivity.getFirstNumber();
+    int num1 = firstNumberActivity.getFirstNumber();
     logger.info("Received first random number: {}", num1);
 
-    int num2 = randomActivity.getSecondNumber();
+    int num2 = secondNumberActivity.getSecondNumber();
     logger.info("Received second random number: {}", num2);
 
-    int num3 = randomActivity.getThirdNumber();
+    int num3 = thirdNumberActivity.getThirdNumber();
     logger.info("Received third random number: {}", num3);
 
     // Calculate the sum

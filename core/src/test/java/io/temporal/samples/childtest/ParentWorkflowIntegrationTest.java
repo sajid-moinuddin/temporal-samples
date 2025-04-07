@@ -3,6 +3,7 @@ package io.temporal.samples.childtest;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.temporal.activity.ActivityOptions;
 import io.temporal.api.filter.v1.WorkflowExecutionFilter;
 import io.temporal.api.workflowservice.v1.ListClosedWorkflowExecutionsRequest;
 import io.temporal.api.workflowservice.v1.ListOpenWorkflowExecutionsRequest;
@@ -11,8 +12,10 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
 import io.temporal.serviceclient.WorkflowServiceStubs;
+import io.temporal.testing.TestActivityEnvironment;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -34,6 +37,7 @@ public class ParentWorkflowIntegrationTest {
   private WorkerFactory factory;
   private Worker workflowWorker;
   private Worker activityWorker;
+  private TestActivityEnvironment testEnvironment;
 
   /**
    * Clean up existing workflows on the Temporal server that match our test workflow ID pattern to
@@ -98,7 +102,7 @@ public class ParentWorkflowIntegrationTest {
   @BeforeEach
   public void setUp() {
     // Get a Workflow service stub connecting to the already running server
-    workflowServiceStubs = WorkflowServiceStubs.newInstance();
+    workflowServiceStubs = WorkflowServiceStubs.newLocalServiceStubs();
 
     // Get a Workflow service client
     workflowClient = WorkflowClient.newInstance(workflowServiceStubs);
@@ -116,14 +120,20 @@ public class ParentWorkflowIntegrationTest {
     workflowWorker.registerWorkflowImplementationTypes(
         ParentWorkflowImpl.class, ChildWorkflowImpl.class);
 
-    // Create dedicated worker for the RandomNumberActivity task queue
-    activityWorker = factory.newWorker(RandomNumberActivity.TASK_QUEUE);
+    // Create dedicated worker for the number activities task queue
+    activityWorker = factory.newWorker("NumberActivitiesTaskQueue");
 
-    // Register activity implementation with the activity worker
-    activityWorker.registerActivitiesImplementations(new RandomNumberActivityImpl());
+    // Register all activity implementations with the activity worker
+    activityWorker.registerActivitiesImplementations(
+        new FirstNumberActivityImpl(),
+        new SecondNumberActivityImpl(),
+        new ThirdNumberActivityImpl());
 
     // Start the worker factory
     factory.start();
+
+    // Create test environment for activity unit tests
+    testEnvironment = TestActivityEnvironment.newInstance();
   }
 
   @AfterEach
@@ -132,12 +142,70 @@ public class ParentWorkflowIntegrationTest {
     if (factory != null) {
       factory.shutdown();
     }
+
+    if (testEnvironment != null) {
+      testEnvironment.close();
+    }
+  }
+
+  private String getCurrentTimestamp() {
+    java.time.format.DateTimeFormatter formatter =
+        java.time.format.DateTimeFormatter.ofPattern("MM-dd-HH-ss");
+    return java.time.LocalDateTime.now().format(formatter);
+  }
+
+  @Test
+  public void testFirstNumberActivity() {
+    // Setup test environment for this activity
+    testEnvironment.registerActivitiesImplementations(new FirstNumberActivityImpl());
+
+    FirstNumberActivity activity =
+        testEnvironment.newActivityStub(
+            FirstNumberActivity.class,
+            ActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(5)).build());
+
+    int result = activity.getFirstNumber();
+    logger.info("FirstNumberActivity test result: {}", result);
+
+    assertTrue(result >= 0, "First number should be a valid integer");
+  }
+
+  @Test
+  public void testSecondNumberActivity() {
+    // Setup test environment for this activity
+    testEnvironment.registerActivitiesImplementations(new SecondNumberActivityImpl());
+
+    SecondNumberActivity activity =
+        testEnvironment.newActivityStub(
+            SecondNumberActivity.class,
+            ActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(5)).build());
+
+    int result = activity.getSecondNumber();
+    logger.info("SecondNumberActivity test result: {}", result);
+
+    assertTrue(result >= 0, "Second number should be a valid integer");
+  }
+
+  @Test
+  public void testThirdNumberActivity() {
+    // Setup test environment for this activity
+    testEnvironment.registerActivitiesImplementations(new ThirdNumberActivityImpl());
+
+    ThirdNumberActivity activity =
+        testEnvironment.newActivityStub(
+            ThirdNumberActivity.class,
+            ActivityOptions.newBuilder().setStartToCloseTimeout(Duration.ofSeconds(5)).build());
+
+    int result = activity.getThirdNumber();
+    logger.info("ThirdNumberActivity test result: {}", result);
+
+    assertTrue(result >= 0, "Third number should be a valid integer");
   }
 
   @Test
   public void testParentAndChildWorkflowExecution() {
     // Create workflow stub with a unique ID
-    String workflowId = "parent-workflow-integration-test-" + System.currentTimeMillis();
+    String workflowId = "parent-workflow-integration-test-" + getCurrentTimestamp();
     logger.info("Starting test workflow with ID: {}", workflowId);
 
     ParentWorkflow workflow =

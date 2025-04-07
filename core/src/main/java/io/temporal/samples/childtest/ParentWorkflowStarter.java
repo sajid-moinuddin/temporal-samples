@@ -46,8 +46,14 @@ public class ParentWorkflowStarter {
     // Register workflow implementations with the worker
     worker.registerWorkflowImplementationTypes(ParentWorkflowImpl.class, ChildWorkflowImpl.class);
 
-    // Register activity implementation
-    worker.registerActivitiesImplementations(new RandomNumberActivityImpl());
+    // Create a worker for activities on the number activities task queue
+    Worker activitiesWorker = factory.newWorker(FirstNumberActivity.TASK_QUEUE);
+
+    // Register activity implementations
+    activitiesWorker.registerActivitiesImplementations(
+        new FirstNumberActivityImpl(),
+        new SecondNumberActivityImpl(),
+        new ThirdNumberActivityImpl());
 
     // Start the worker factory (all workers)
     System.out.println("Starting workers...");
